@@ -347,7 +347,7 @@ void CImage::load_PNG(char *filename) {
     exit(-1);
   }
 
-  // Assign  memory to store the image
+  // Assign memory to store the image
   int bytes_per_row = png_get_rowbytes(png_ptr, info_ptr);  
   
   row_pointers = (png_byte**)png_malloc(png_ptr,
@@ -412,7 +412,7 @@ void CImage::save_PNG(char *filename, int bits_per_channel) {
   png_byte bit_depth;
   png_structp png_ptr;
   png_infop info_ptr;
-  png_bytep * row_pointers;
+  png_byte **row_pointers;
 
   /* create file */
   FILE *fp = fopen(filename, "wb");
@@ -432,6 +432,9 @@ void CImage::save_PNG(char *filename, int bits_per_channel) {
   info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     PRINT_ERROR("png_create_info_struct failed\n");
+    
+    // We need to free the read struct to prevent a memory leak
+    png_destroy_read_struct(&png_ptr, NULL, NULL);        
     exit(-1);
   }
 
@@ -461,13 +464,18 @@ void CImage::save_PNG(char *filename, int bits_per_channel) {
 
   png_write_info(png_ptr, info_ptr);
 
-  // Create row pointers
+  // Assign memory to store the image
   int bytes_per_row = png_get_rowbytes(png_ptr, info_ptr);  
-  png_byte *png_buffer = new png_byte[this->Ny * bytes_per_row];
   
-  row_pointers = (png_bytep*)png_malloc(png_ptr, this->Ny * sizeof(png_bytep));
-  for (int y = 0; y < this->Ny; y++)
-    row_pointers[y] = &png_buffer[y * bytes_per_row];
+  row_pointers = (png_byte**)png_malloc(png_ptr,
+                                        this->Ny * sizeof(png_byte*));
+
+  for (int y = 0; y < this->Ny; y++) {
+    png_byte *row = (png_byte*)png_malloc(
+                                 png_ptr,
+                                 sizeof(uint8_t) * bytes_per_row);
+    row_pointers[y] = row;
+  }
 
   /* write bytes */
   if (setjmp(png_jmpbuf(png_ptr))) {
@@ -515,10 +523,15 @@ void CImage::save_PNG(char *filename, int bits_per_channel) {
   png_write_end(png_ptr, NULL);
   fclose(fp);
 
-  /* cleanup heap allocation */
   // Free memory
-  free(row_pointers);
-  delete[] png_buffer;
+  for (int y = 0; y < this->Ny; y++) {
+    png_free(png_ptr, row_pointers[y]);
+  }
+  //  
+  png_free(png_ptr, row_pointers);
+
+  png_destroy_write_struct(&png_ptr, (png_infopp)&info_ptr);
+  png_destroy_info_struct(png_ptr, (png_infopp)&info_ptr);
 }
 
 void CImage::save_float_RGB(char *filename) {
