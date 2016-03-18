@@ -49,8 +49,10 @@ void  printusage(const char *pname,
 		{
 			printf("[-%c",gp[i]);
 			
-			if (i+1 < (int) strlen(gp) && gp[i+1] ==  ':') printf(" %c] ", gp[i]);
-			else printf("] ");
+			if (i+1 < (int) strlen(gp) && gp[i+1] ==  ':')
+			  printf(" %c] ", gp[i]);
+			else
+			  printf("] ");
 			
 		}
 	
@@ -69,7 +71,8 @@ void  printusage(const char *pname,
 			if (i+1 < (int) strlen(gp) && gp[i+1] ==  ':') {
 				
 				printf("  %c\t %s ", gp[i], opt[j]->comment);
-				if (opt[j]->defvalue != NULL) printf("(Default: %s)",opt[j]->defvalue);
+				if (opt[j]->defvalue != NULL)
+				  printf("(Default: %s)",opt[j]->defvalue);
 				
 				printf("\n");
 				
@@ -105,8 +108,14 @@ int parsecmdline(const char *pname,
 	gp[0]='\0';
 	
 	
-	for(int i=0; i < nopt; i++) { opt[i]->flag = 0; opt[i]->value=NULL; strcat(gp, opt[i]->gp);}
-	for(int i=0; i < npar; i++) { par[i]->value = NULL;}
+	for(int i=0; i < nopt; i++) {
+		opt[i]->flag = 0;
+		opt[i]->value=NULL;
+		strcat(gp, opt[i]->gp);
+	}
+	
+	for(int i=0; i < npar; i++)
+		par[i]->value = NULL;
 	
 	opterr = 0;	// No messages by getopt
 	
@@ -123,8 +132,10 @@ int parsecmdline(const char *pname,
 				/*				if (optarg != NULL && optarg[0] == '-')
 				 {	 
 				 printf("\n%s: %s\n", pname, function);
-				 fprintf (stderr, "\nerror: option -%c requires an argument.\n", c);
-				 printusage(pname,function, gp, argc, argv, opt, nopt, par, npar);
+				 fprintf (stderr,
+				   "\nerror: option -%c requires an argument.\n", c);
+				 printusage(pname,function, gp, argc, argv,
+				            opt, nopt, par, npar);
 				 return 0;
 				 
 				 }*/
@@ -144,12 +155,15 @@ int parsecmdline(const char *pname,
 				if (optopt == gp[i])
 				{
 					printf("\n%s: %s\n", pname, function);
-					fprintf (stderr, "\nerror: option -%c requires an argument.\n", optopt);
+					fprintf (stderr,
+					  "\nerror: option -%c requires an argument.\n",
+					  optopt);
 					break;	
 				}
 			
 			if (i == strlen(gp)) { 	printf("\n%s: %s\n", pname, function);
-				fprintf (stderr, "\nerror: unknown option `-%c'.\n", optopt);
+				fprintf (stderr, "\nerror: unknown option `-%c'.\n",
+				  optopt);
 			}
 			
 			printusage(pname, gp,  opt,  par);
@@ -161,9 +175,9 @@ int parsecmdline(const char *pname,
 	
 	
 	//// Setting default values for non selected options
-	for(int j=0; j < nopt; j++)
-		if (opt[j]->flag == 0 && opt[j]->defvalue != NULL) opt[j]->value =  opt[j]->defvalue;
-	
+	for (int j=0; j < nopt; j++)
+		if (opt[j]->flag == 0 && opt[j]->defvalue != NULL)
+		  opt[j]->value =  opt[j]->defvalue;
 	
 	if (argc - optind != npar) {
 		printf("\n%s: %s\n", pname, function);
@@ -173,9 +187,8 @@ int parsecmdline(const char *pname,
 	}
 	
 	int i=0;
-	for (int index = optind; index < argc ; index++, i++){
+	for (int index = optind; index < argc ; index++, i++)
 		par[i]->value = argv[index];
-	}
 	
 	return 1;
 }

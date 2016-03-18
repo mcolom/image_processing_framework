@@ -30,7 +30,7 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-  CFramework *fw = CFramework::get_framework();  
+  CFramework *fw = CFramework::get_framework();
   //try {
     algorithm(argc, argv);
     delete fw;

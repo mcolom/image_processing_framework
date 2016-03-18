@@ -38,7 +38,8 @@ CFramework::CFramework() {
 }
 
 CFramework::~CFramework() {
-  PRINT_VERBOSE("Cleaning up %d matrices\n", (int)this->mmatrices.size());
+  PRINT_VERBOSE("Cleaning up %d matrices\n",
+    (int)this->mmatrices.size());
   //
   if (CFramework_verbose)
     this->print_matrix_list();
@@ -48,22 +49,38 @@ CFramework::~CFramework() {
     MatrixInfo *matrix_info = it->second;
     this->delete_matrix(matrix_info->id);
   }
+  
+  // Delete singleton framework object
+  if (CFramework::CFramework_ref != NULL) {
+   if (CFramework_verbose)
+     PRINT_VERBOSE("Deleting singleton framework object\n");
+     
+   CFramework::CFramework_ref = NULL;  
+   delete CFramework::CFramework_ref;
+  }
+  
 }
 
 CFramework* CFramework::get_framework() {
-  if (CFramework::CFramework_ref == NULL)
-   CFramework::CFramework_ref = new CFramework();
+  if (CFramework::CFramework_ref == NULL) {
+    CFramework::CFramework_ref = new CFramework();
+    if (CFramework_verbose)
+      PRINT_VERBOSE("Creating singleton framework object\n");
+  }
   return CFramework::CFramework_ref;
 }
 
 void CFramework::print_matrix_list() {
-  printf("\nFramework matrix list (%d matrices):\n", (int)this->mmatrices.size());
+  printf("\nFramework matrix list (%d matrices):\n",
+    (int)this->mmatrices.size());
   printf("--------------------------------------------\n");
   map<int, MatrixInfo*>::iterator end = this->mmatrices.end(); 
   int i = 1;
-  for (map<int, MatrixInfo*>::iterator it = this->mmatrices.begin(); it != end; ++it) {
+  for (map<int, MatrixInfo*>::iterator it = this->mmatrices.begin();
+       it != end; ++it) {
     MatrixInfo *matrix_info = it->second;
-    printf("%d) Matrix M_%d data at %p\n", i, matrix_info->id, matrix_info->data);
+    printf("%d) Matrix M_%d data at %p\n",
+      i, matrix_info->id, matrix_info->data);
     i++;
   }
   printf("\n");
@@ -84,7 +101,8 @@ float *CFramework::create_matrix(int num_dims, int *N, int &out_id) {
   this->mmatrices[id] = matrix_info;
   out_id = id;
 
-  PRINT_VERBOSE("Created matrix M_%d at %p, data at %p\n", id, matrix_info, matrix_info->data);
+  PRINT_VERBOSE("Created matrix M_%d at %p, data at %p\n",
+    id, matrix_info, matrix_info->data);
   return data;
 }
 
@@ -110,7 +128,8 @@ void CFramework::delete_matrix(int id) {
     PRINT_ERROR("matrix M_%d not in memory!\n", id);
     exit(-1);
   }
-  PRINT_VERBOSE("Deleting matrix M_%d at %p, data at %p\n", id, matrix_info, matrix_info->data);
+  PRINT_VERBOSE("Deleting matrix M_%d at %p, data at %p\n",
+    id, matrix_info, matrix_info->data);
   delete[] matrix_info->data;
   this->mmatrices.erase(id);
   delete matrix_info;
@@ -125,7 +144,8 @@ MatrixInfo *CFramework::find_matrix(int id) {
 
 int CFramework::find_matrix(float *data) {
   map<int, MatrixInfo*>::iterator end = this->mmatrices.end(); 
-  for (map<int, MatrixInfo*>::iterator it = this->mmatrices.begin(); it != end; ++it) {
+  for (map<int, MatrixInfo*>::iterator it = this->mmatrices.begin();
+       it != end; ++it) {
     MatrixInfo *matrix_info = it->second;
     if (matrix_info->data == data)
       return matrix_info->id;
@@ -136,7 +156,8 @@ int CFramework::find_matrix(float *data) {
 MatrixInfo *CFramework::find_matrix_by_list_pos(int pos) {
   map<int, MatrixInfo*>::iterator end = this->mmatrices.end(); 
   int i = 1;
-  for (map<int, MatrixInfo*>::iterator it = this->mmatrices.begin(); it != end; ++it) {
+  for (map<int, MatrixInfo*>::iterator it = this->mmatrices.begin();
+       it != end; ++it) {
     MatrixInfo *matrix_info = it->second;
     if (i == pos)
       return matrix_info;
@@ -156,7 +177,9 @@ void CFramework::save_matrix(MatrixInfo *matrix, char *filename) {
   for (int i = 0; i < matrix->num_dims; i++)
     fwrite(&matrix->N[i], sizeof(matrix->N[0]), 1, fp);
 
-  size_t written = fwrite(matrix->data, sizeof(matrix->data[0]), num_elements, fp);
+  size_t written = fwrite(matrix->data,
+                          sizeof(matrix->data[0]),
+                          num_elements, fp);
   if (written != num_elements) {
     fprintf(stderr, "Write error!\n");
     exit(-1);
@@ -193,7 +216,9 @@ int CFramework::load_matrix(MatrixInfo *matrix, char *filename) {
   matrix->data = new float[num_elements];
 
   // Read data
-  size_t read = fread(matrix->data, sizeof(matrix->N[0]), num_elements, fp);
+  size_t read = fread(matrix->data,
+                      sizeof(matrix->N[0]),
+                      num_elements, fp);
   if (read != num_elements) {
     fprintf(stderr, "Read error!\n");
     return -3;

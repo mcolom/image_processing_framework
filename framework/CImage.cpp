@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <iostream>
 #include <sstream>
 #include <string.h>
@@ -276,11 +277,11 @@ static void *read_png_abort(FILE * fp,
 }
 
 // Load PNG image
-// http://zarb.org/~gc/html/libpng.html
+// Based on http://zarb.org/~gc/html/libpng.html
 void CImage::load_PNG(char *filename) {
-  png_structp png_ptr;
-  png_infop info_ptr;
-  png_bytep * row_pointers;
+  png_structp png_ptr; // read struct
+  png_infop info_ptr;  // info struct
+  png_byte **row_pointers;
   const unsigned PNG_SIG_LEN = 4;
 
   png_byte header[8];    // 8 is the maximum size that can be checked
@@ -301,16 +302,21 @@ void CImage::load_PNG(char *filename) {
   }
 
   /* initialize stuff */
+  
+  // Read struct
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-
   if (!png_ptr) {
     PRINT_ERROR("png_create_read_struct failed\n");
     exit(-1);
   }
 
+  // Info struct
   info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr) {
     PRINT_ERROR("png_create_info_struct failed\n");
+    
+    // We need to free the read struct to prevent a memory leak
+    png_destroy_read_struct(&png_ptr, NULL, NULL);    
     exit(-1);
   }
 
@@ -341,15 +347,23 @@ void CImage::load_PNG(char *filename) {
     exit(-1);
   }
 
+  // Assign  memory to store the image
   int bytes_per_row = png_get_rowbytes(png_ptr, info_ptr);  
-  png_byte *png_buffer = new png_byte[this->Ny * bytes_per_row];
   
-  row_pointers = (png_bytep*)png_malloc(png_ptr, this->Ny * sizeof(png_bytep));
-  for (int y = 0; y < this->Ny; y++)
-    row_pointers[y] = &png_buffer[y * bytes_per_row];  
+  row_pointers = (png_byte**)png_malloc(png_ptr,
+                                        this->Ny * sizeof(png_byte*));
 
+  for (int y = 0; y < this->Ny; y++) {
+    png_byte *row = (png_byte*)png_malloc(
+                                 png_ptr,
+                                 sizeof(uint8_t) * bytes_per_row);
+    row_pointers[y] = row;
+  }
+
+  // Read image
   png_read_image(png_ptr, row_pointers);
   int num_channels = png_get_channels(png_ptr, info_ptr);
+
   fclose(fp);
   
   // Create data channels
@@ -383,8 +397,14 @@ void CImage::load_PNG(char *filename) {
   }
 
   // Free memory
-  free(row_pointers);
-  delete[] png_buffer;
+  for (int y = 0; y < this->Ny; y++) {
+    png_free(png_ptr, row_pointers[y]);
+  }
+  //  
+  png_free(png_ptr, row_pointers);
+
+  png_destroy_read_struct(&png_ptr, (png_infopp)&info_ptr, NULL);
+  png_destroy_info_struct(png_ptr, (png_infopp)&info_ptr);
 }
 
 void CImage::save_PNG(char *filename, int bits_per_channel) {
