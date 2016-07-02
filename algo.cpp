@@ -75,7 +75,7 @@ void algorithm(int argc, char **argv) {
     memcpy(output->get_channel(2), input.get_channel(2), N*sizeof(float));
   }
   else
-    memcpy(output->get_channel(0), input.get_channel(0), N);
+    memcpy(output->get_channel(0), input.get_channel(0), N*sizeof(float));
 
   // Save output
   output->save((char*)"output.png", input.get_bits_per_channel());
