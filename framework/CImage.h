@@ -31,6 +31,7 @@
 #define CIMAGE_FLOAT_RGB 0
 #define CIMAGE_PNG 1
 #define CIMAGE_LUM 2
+#define CIMAGE_TIF 3
 
 using namespace std;
 
@@ -50,6 +51,7 @@ class CImage {
     void load_LUM(char *filename);
     void load_PNG(char *filename);
     void save_PNG(char *filename, int bits_per_channel);
+    void load_TIF(char *filename);
     void save_float_RGB(char *filename);
   public:
     CImage();

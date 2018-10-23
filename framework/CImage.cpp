@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string.h>
 #include <png.h>
+#include <tiffio.h>
 //
 #include "CImage.h"
 #include "CFramework.h"
@@ -86,7 +87,7 @@ CImage::~CImage() {
 
 // Obtain format by extension of filename
 int CImage::get_file_type(char *filename) {
-  const char *exts[] = {".RGB", ".PNG", ".LUM"};
+  const char *exts[] = {".RGB", ".PNG", ".LUM", ".TIF"};
 
   int type = -1;
   int i = 0;
@@ -125,6 +126,9 @@ void CImage::load(char *filename) {
       break;
     case CIMAGE_LUM:
       this->load_LUM(filename);
+      break;
+    case CIMAGE_TIF:
+      this->load_TIF(filename);
       break;
     default:
       PRINT_ERROR("CImage: unknown file type: %s\n", filename);
@@ -265,6 +269,33 @@ void CImage::load_LUM(char *filename) {
   }
 
   fclose(infile);
+}
+
+void CImage::load_TIF(char *filename) {
+  // https://www.cs.rochester.edu/~nelson/courses/vision/resources/tiff/libtiff.html
+    
+  TIFF *tif = TIFFOpen(filename, "r");
+  
+  TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &this->Nx);
+  TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &this->Ny);
+    
+  printf("CImage load TIF (%dx%d)\n", this->Nx, this->Ny);
+  
+  size_t npixels = this->Nx * this->Ny;
+  uint32* raster = (uint32*) _TIFFmalloc(npixels * sizeof(uint32));
+  
+  if (raster == NULL) {
+    PRINT_ERROR("Can't allocate memory for TIFF file %s\n", filename);
+    exit(-1);
+  }
+  
+  if (!TIFFReadRGBAImage(tif, this->Nx, this->Ny, raster, 0)) {
+    PRINT_ERROR("Can't read TIFF image %s\n", filename);
+    exit(-1);
+  }
+  
+  _TIFFfree(raster);
+  TIFFClose(tif);
 }
 
 static void *read_png_abort(FILE * fp,

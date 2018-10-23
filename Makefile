@@ -6,7 +6,7 @@ CSTRICT   = -Wall -Wextra -ansi
 CXXOPT    = -O3
 CXXFLAGS  = $(CXXOPT) -fopenmp
 CXXSTRICT = -Wall -Wextra -ansi
-LDFLAGS   = -lm -lpng
+LDFLAGS   = -lm -lpng -ltiff
 EXEC      = test
 
 default: $(EXEC)
